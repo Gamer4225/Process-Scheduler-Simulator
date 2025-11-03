@@ -1,0 +1,169 @@
+# ==============================
+# Process Scheduler Simulator
+# Supports: FCFS, SJF, Priority, Round Robin
+# ==============================
+
+class Process:
+    def __init__(self, pid, arrival, burst, priority=0):
+        self.pid = pid
+        self.arrival = arrival
+        self.burst = burst
+        self.priority = priority
+        self.remaining = burst
+        self.start_time = None
+        self.completion_time = None
+        self.turnaround = None
+        self.waiting = None
+
+
+# ==============================
+# FCFS (First Come First Serve)
+# ==============================
+def fcfs(processes):
+    print("\n===== FCFS Scheduling =====")
+    processes.sort(key=lambda p: p.arrival)
+    time = 0
+    for p in processes:
+        if time < p.arrival:
+            time = p.arrival
+        p.start_time = time
+        time += p.burst
+        p.completion_time = time
+        p.turnaround = p.completion_time - p.arrival
+        p.waiting = p.turnaround - p.burst
+
+    display_results(processes)
+
+
+# ==============================
+# SJF (Shortest Job First - Non-Preemptive)
+# ==============================
+def sjf(processes):
+    print("\n===== SJF (Non-Preemptive) Scheduling =====")
+    processes.sort(key=lambda p: (p.arrival, p.burst))
+    time = 0
+    completed = []
+    while len(completed) < len(processes):
+        available = [p for p in processes if p.arrival <= time and p not in completed]
+        if not available:
+            time += 1
+            continue
+        current = min(available, key=lambda x: x.burst)
+        if time < current.arrival:
+            time = current.arrival
+        current.start_time = time
+        time += current.burst
+        current.completion_time = time
+        current.turnaround = current.completion_time - current.arrival
+        current.waiting = current.turnaround - current.burst
+        completed.append(current)
+
+    display_results(processes)
+
+
+# ==============================
+# Priority Scheduling (Non-Preemptive)
+# ==============================
+def priority_scheduling(processes):
+    print("\n===== Priority Scheduling =====")
+    processes.sort(key=lambda p: (p.arrival, p.priority))
+    time = 0
+    completed = []
+    while len(completed) < len(processes):
+        available = [p for p in processes if p.arrival <= time and p not in completed]
+        if not available:
+            time += 1
+            continue
+        current = min(available, key=lambda x: x.priority)
+        if time < current.arrival:
+            time = current.arrival
+        current.start_time = time
+        time += current.burst
+        current.completion_time = time
+        current.turnaround = current.completion_time - current.arrival
+        current.waiting = current.turnaround - current.burst
+        completed.append(current)
+
+    display_results(processes)
+
+
+# ==============================
+# Round Robin Scheduling
+# ==============================
+def round_robin(processes, quantum):
+    print("\n===== Round Robin Scheduling (q = {}) =====".format(quantum))
+    queue = []
+    time = 0
+    completed = []
+    processes.sort(key=lambda p: p.arrival)
+    queue.append(processes[0])
+    i = 1
+
+    while queue:
+        current = queue.pop(0)
+        if current.start_time is None:
+            current.start_time = time if time >= current.arrival else current.arrival
+
+        if time < current.arrival:
+            time = current.arrival
+
+        if current.remaining > quantum:
+            time += quantum
+            current.remaining -= quantum
+        else:
+            time += current.remaining
+            current.remaining = 0
+            current.completion_time = time
+            current.turnaround = current.completion_time - current.arrival
+            current.waiting = current.turnaround - current.burst
+            completed.append(current)
+
+        while i < len(processes) and processes[i].arrival <= time:
+            queue.append(processes[i])
+            i += 1
+
+        if current.remaining > 0:
+            queue.append(current)
+
+        if not queue and i < len(processes):
+            queue.append(processes[i])
+            i += 1
+
+    display_results(processes)
+
+
+# ==============================
+# Utility: Display Results
+# ==============================
+def display_results(processes):
+    print("\nPID\tAT\tBT\tPRI\tCT\tTAT\tWT")
+    total_tat = total_wt = 0
+    for p in processes:
+        total_tat += p.turnaround
+        total_wt += p.waiting
+        print(f"{p.pid}\t{p.arrival}\t{p.burst}\t{p.priority}\t{p.completion_time}\t{p.turnaround}\t{p.waiting}")
+    print(f"\nAverage Turnaround Time = {total_tat / len(processes):.2f}")
+    print(f"Average Waiting Time = {total_wt / len(processes):.2f}")
+
+
+# ==============================
+# MAIN (User Input)
+# ==============================
+if __name__ == "__main__":
+    n = int(input("Enter number of processes: "))
+    processes = []
+
+    for i in range(n):
+        print(f"\nProcess {i+1}:")
+        at = int(input("Arrival Time: "))
+        bt = int(input("Burst Time: "))
+        pr = int(input("Priority (lower = higher priority): "))
+        processes.append(Process(i+1, at, bt, pr))
+
+    q = int(input("\nEnter Time Quantum for Round Robin: "))
+
+    # Run algorithms
+    fcfs([Process(p.pid, p.arrival, p.burst, p.priority) for p in processes])
+    sjf([Process(p.pid, p.arrival, p.burst, p.priority) for p in processes])
+    priority_scheduling([Process(p.pid, p.arrival, p.burst, p.priority) for p in processes])
+    round_robin([Process(p.pid, p.arrival, p.burst, p.priority) for p in processes], quantum=q)
