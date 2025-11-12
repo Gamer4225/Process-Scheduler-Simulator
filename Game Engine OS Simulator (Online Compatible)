@@ -1,46 +1,26 @@
-"""
-GAME ENGINE × OPERATING SYSTEM SIMULATION
------------------------------------------
-This program demonstrates how OS concepts like:
- - CPU Scheduling (Round Robin)
- - Multithreading
- - Memory Management
- - Game Loop
-are used in modern Game Engines.
-
-Compatible with all online compilers (GDB, Replit, Programiz, etc.)
-Author: Your Name
-Date: 2025-11-13
-"""
-
-import threading
 import time
 import random
 import queue
 
 # ----------------------------------------------------------
-# 1️⃣ Game Task (Simulating an Engine Subsystem)
+# Game Task Class
 # ----------------------------------------------------------
 
 class GameTask:
-    """
-    Represents a subsystem in the game engine such as:
-    Rendering, Physics, AI, or Audio.
-    """
+    """Simulates a subsystem (thread) in the game engine."""
+
     def __init__(self, name, total_time):
         self.name = name
         self.remaining_time = total_time
 
     def execute(self, time_slice):
-        """
-        Simulates the task running for one time slice.
-        """
+        """Runs the task for one CPU time slice."""
         if self.remaining_time <= 0:
-            return True  # already done
+            return True
 
         run_time = min(self.remaining_time, time_slice)
         print(f"⚙️  {self.name} running for {run_time:.2f}s...")
-        time.sleep(run_time * 0.3)  # simulate workload (scaled)
+        time.sleep(0.1)
         self.remaining_time -= run_time
 
         if self.remaining_time <= 0:
@@ -52,36 +32,29 @@ class GameTask:
 
 
 # ----------------------------------------------------------
-# 2️⃣ CPU Scheduler (Round Robin Simulation)
+# CPU Scheduler
 # ----------------------------------------------------------
 
-def cpu_scheduler(task_queue, time_slice=1.0):
-    """
-    Simulates a Round-Robin CPU scheduler for Game Engine threads.
-    """
+def cpu_scheduler(task_queue, time_slice):
+    """Simulates Round-Robin CPU Scheduling."""
     print("\n🧠 CPU Scheduler: Starting Round-Robin Scheduling\n")
 
     while not task_queue.empty():
         task = task_queue.get()
         finished = task.execute(time_slice)
-
         if not finished:
-            # Task still has work remaining → requeue
             task_queue.put(task)
-
-        time.sleep(0.3)
+        time.sleep(0.2)
 
     print("✅ All Engine Tasks Completed!\n")
 
 
 # ----------------------------------------------------------
-# 3️⃣ Memory Manager Simulation
+# Memory Manager
 # ----------------------------------------------------------
 
 def memory_manager():
-    """
-    Simulates memory usage and cleanup inside a Game Engine.
-    """
+    """Simulates memory usage and cleanup."""
     print("\n💾 Memory Management System\n")
     total_memory = 4096  # MB
     used_memory = random.randint(1000, 2000)
@@ -90,64 +63,77 @@ def memory_manager():
         fluctuation = random.randint(-200, 300)
         used_memory = max(800, min(total_memory, used_memory + fluctuation))
         print(f"Frame {frame}: Used {used_memory} MB | Free {total_memory - used_memory} MB")
-        time.sleep(0.5)
+        time.sleep(0.3)
 
     print("♻️  Garbage Collector freed unused textures and meshes.\n")
 
 
 # ----------------------------------------------------------
-# 4️⃣ Game Loop Simulation
+# Game Loop
 # ----------------------------------------------------------
 
-def game_loop():
-    """
-    Simulates a simplified 60 FPS game loop updating multiple systems.
-    """
+def game_loop(num_frames):
+    """Simulates a 60 FPS game loop."""
     print("\n🎮 GAME LOOP (60 FPS Target)\n")
     fps = 60
     frame_time = 1 / fps
 
-    for frame in range(1, 11):
-        print(f"🌀 Frame {frame}: Updating Render | Physics | AI | Audio")
+    for frame in range(1, num_frames + 1):
+        print(f"🌀 Frame {frame}: Updating Render | Physics | Audio | AI")
         time.sleep(frame_time * random.uniform(2, 4))
 
-    print("\n🏁 Game Loop Finished - 10 Frames Simulated.\n")
+    print("\n🏁 Game Loop Finished.\n")
 
 
 # ----------------------------------------------------------
-# 5️⃣ Main Simulation Driver
+# Main Function
 # ----------------------------------------------------------
 
 def main():
     print("=" * 60)
-    print("🧩 GAME ENGINE × OPERATING SYSTEM SIMULATION 🧩")
+    print("🧩 GAME ENGINE × OPERATING SYSTEM SIMULATION (INTERACTIVE) 🧩")
     print("=" * 60)
 
-    # Step 1: Initialize Engine Tasks (like threads)
-    tasks = [
-        GameTask("Rendering Thread", random.uniform(2.0, 3.0)),
-        GameTask("Physics Engine", random.uniform(1.5, 2.5)),
-        GameTask("AI System", random.uniform(1.0, 2.0)),
-        GameTask("Audio Manager", random.uniform(0.5, 1.5))
-    ]
+    # --- USER INPUTS ---
+    try:
+        num_tasks = int(input("Enter number of subsystems (1–10): "))
+        time_slice = float(input("Enter CPU time slice (in seconds): "))
+        min_exec = float(input("Enter minimum execution time per task (s): "))
+        max_exec = float(input("Enter maximum execution time per task (s): "))
+        num_frames = int(input("Enter number of frames to simulate (5–30): "))
+    except ValueError:
+        print("❌ Invalid input. Please enter valid numbers.")
+        return
 
-    # Step 2: Load Tasks into a Queue for Scheduling
-    task_queue = queue.Queue()
-    for task in tasks:
-        task_queue.put(task)
+    if num_tasks <= 0 or time_slice <= 0 or min_exec <= 0 or max_exec <= 0:
+        print("❌ Values must be greater than zero.")
+        return
 
-    # Step 3: Simulate Memory Management
+    # --- MEMORY MANAGEMENT ---
     memory_manager()
 
-    # Step 4: Simulate CPU Scheduling
-    cpu_scheduler(task_queue)
+    # --- TASK CREATION ---
+    print("\n🧮 Creating Game Engine Subsystems...\n")
+    task_queue = queue.Queue()
 
-    # Step 5: Run the Game Loop
-    game_loop()
+    for i in range(num_tasks):
+        exec_time = random.uniform(min_exec, max_exec)
+        task_queue.put(GameTask(f"Subsystem-{i+1}", exec_time))
+        print(f"🔧 Created Subsystem-{i+1} | Execution Time: {exec_time:.2f}s")
 
-    print("🎯 Simulation Complete – Game Engine and OS in Action!")
+    # --- CPU SCHEDULING ---
+    cpu_scheduler(task_queue, time_slice)
+
+    # --- GAME LOOP ---
+    game_loop(num_frames)
+
+    print("🎯 Simulation Complete – Game Engine and OS Interaction Demonstrated!")
     print("=" * 60)
 
+
+# ----------------------------------------------------------
+# Entry Point
+# ----------------------------------------------------------
 
 if __name__ == "__main__":
     main()
